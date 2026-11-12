@@ -1,0 +1,119 @@
+{
+ "rows": 2916697,
+ "uniq_addr": 2631095,
+ "ransom_rows": 41413,
+ "white_rows": 2875284,
+ "families": 28,
+ "addr_repeated": 96767,
+ "rows_of_repeated_addr": 382369,
+ "max_rep": 420,
+ "uniq_ransom_addr": 20849,
+ "addr_mixed_binary": 0,
+ "addr_multi_label": 0,
+ "ransom_rows_in_repeated_addr": 23113,
+ "ransom_addr_repeated": 2549,
+ "white_rows_in_repeated_addr": 359256,
+ "dup_full_rows": 0,
+ "year_table": [
+  {
+   "year": 2011,
+   "white": 355284,
+   "ransom": 65
+  },
+  {
+   "year": 2012,
+   "white": 365000,
+   "ransom": 714
+  },
+  {
+   "year": 2013,
+   "white": 365000,
+   "ransom": 7494
+  },
+  {
+   "year": 2014,
+   "white": 365000,
+   "ransom": 10319
+  },
+  {
+   "year": 2015,
+   "white": 365000,
+   "ransom": 3701
+  },
+  {
+   "year": 2016,
+   "white": 365000,
+   "ransom": 15631
+  },
+  {
+   "year": 2017,
+   "white": 365000,
+   "ransom": 3486
+  },
+  {
+   "year": 2018,
+   "white": 330000,
+   "ransom": 3
+  }
+ ],
+ "family_rows": {
+  "paduaCryptoWall": 12390,
+  "montrealCryptoLocker": 9315,
+  "princetonCerber": 9223,
+  "princetonLocky": 6625,
+  "montrealCryptXXX": 2419,
+  "montrealNoobCrypt": 483,
+  "montrealDMALockerv3": 354,
+  "montrealDMALocker": 251,
+  "montrealSamSam": 62,
+  "montrealCryptoTorLocker2015": 55,
+  "montrealGlobeImposter": 55,
+  "montrealGlobev3": 34,
+  "montrealGlobe": 32,
+  "montrealWannaCry": 28,
+  "montrealRazy": 13,
+  "montrealAPT": 11,
+  "paduaKeRanger": 10,
+  "montrealFlyper": 9,
+  "montrealXTPLocker": 8,
+  "montrealVenusLocker": 7,
+  "montrealXLockerv5.0": 7,
+  "montrealCryptConsole": 7,
+  "montrealEDA2": 6,
+  "montrealJigSaw": 4,
+  "paduaJigsaw": 2,
+  "montrealXLocker": 1,
+  "montrealSam": 1,
+  "montrealComradeCircle": 1
+ },
+ "family_addr": {
+  "montrealAPT": 2,
+  "montrealComradeCircle": 1,
+  "montrealCryptConsole": 5,
+  "montrealCryptXXX": 1354,
+  "montrealCryptoLocker": 1509,
+  "montrealCryptoTorLocker2015": 32,
+  "montrealDMALocker": 21,
+  "montrealDMALockerv3": 143,
+  "montrealEDA2": 4,
+  "montrealFlyper": 8,
+  "montrealGlobe": 7,
+  "montrealGlobeImposter": 1,
+  "montrealGlobev3": 5,
+  "montrealJigSaw": 3,
+  "montrealNoobCrypt": 28,
+  "montrealRazy": 1,
+  "montrealSam": 1,
+  "montrealSamSam": 44,
+  "montrealVenusLocker": 1,
+  "montrealWannaCry": 5,
+  "montrealXLocker": 1,
+  "montrealXLockerv5.0": 3,
+  "montrealXTPLocker": 3,
+  "paduaCryptoWall": 1894,
+  "paduaJigsaw": 2,
+  "paduaKeRanger": 10,
+  "princetonCerber": 9177,
+  "princetonLocky": 6584
+ }
+}

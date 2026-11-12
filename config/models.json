@@ -1,0 +1,33 @@
+{
+  "_comment": "Model configuration used in every experiment. Parameters that are not listed keep the library default of the versions in requirements.txt. No early stopping, no resampling.",
+  "feature_sets": {
+    "all": ["year", "day", "length", "weight", "count", "looped", "neighbors", "income"],
+    "topological": ["length", "weight", "count", "looped", "neighbors", "income"],
+    "identifier": ["year", "day", "length", "weight", "count", "looped", "neighbors", "income", "address_code"]
+  },
+  "label_encoding": {"white": 0, "any of the 28 ransomware family names": 1},
+  "preprocessing": {
+    "missing_values": "none in the file; no imputation",
+    "outliers": "not removed or clipped",
+    "logistic_regression_only": "log1p on the six topological features, then StandardScaler fitted on the training partition"
+  },
+  "models": {
+    "LR": {"class": "sklearn.linear_model.LogisticRegression", "C": 1.0, "penalty": "l2", "solver": "lbfgs", "max_iter": 300},
+    "DT": {"class": "sklearn.tree.DecisionTreeClassifier", "criterion": "gini", "max_depth": null, "min_samples_leaf": 5},
+    "RF": {"class": "sklearn.ensemble.RandomForestClassifier", "n_estimators": 100, "criterion": "gini", "max_depth": null, "min_samples_leaf": 2, "max_features": "sqrt", "bootstrap": true, "max_samples": 200000},
+    "XGB": {"class": "xgboost.XGBClassifier", "n_estimators": 200, "max_depth": 8, "learning_rate": 0.1, "tree_method": "hist", "max_bin": 256, "subsample": 1.0, "colsample_bytree": 1.0, "reg_lambda": 1.0, "reg_alpha": 0.0, "min_child_weight": 1, "gamma": 0.0, "early_stopping_rounds": null},
+    "LGBM": {"class": "lightgbm.LGBMClassifier", "n_estimators": 300, "num_leaves": 63, "max_depth": -1, "learning_rate": 0.05, "min_child_samples": 20, "subsample": 1.0, "colsample_bytree": 1.0, "reg_lambda": 0.0, "reg_alpha": 0.0, "early_stopping_rounds": null},
+    "XGB_weighted": {"class": "xgboost.XGBClassifier", "same_as": "XGB", "scale_pos_weight": "number of negative training records / number of positive training records"},
+    "family_attribution": {"RF": {"n_estimators": 200}, "LGBM": {"n_estimators": 200}}
+  },
+  "seeds": {
+    "random_and_address_disjoint": [0, 1, 2, 3, 4],
+    "temporal_model_seeds": [0, 1, 2, 3, 4],
+    "rolling_origin_and_combined": [0, 1, 2],
+    "withheld_family": [0, 1, 2, 3, 4],
+    "address_purge": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+    "cluster_bootstrap_rng": 12345
+  },
+  "threshold_calibration": {"validation_share_of_training_addresses": 0.2, "target_false_positive_rate": 0.01, "rule": "99th percentile of the scores of white validation records"},
+  "bootstrap": {"unit": "address", "resamples": 1000, "resamples_single_year": 500, "interval": "percentile 2.5-97.5"}
+}

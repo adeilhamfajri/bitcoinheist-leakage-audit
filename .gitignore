@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.venv/
+BitcoinHeistData.csv
+splits_check/
+*.npz
