@@ -21,13 +21,14 @@
     "family_attribution": {"RF": {"n_estimators": 200}, "LGBM": {"n_estimators": 200}}
   },
   "seeds": {
-    "random_and_address_disjoint": [0, 1, 2, 3, 4],
+    "random_and_address_disjoint": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
     "temporal_model_seeds": [0, 1, 2, 3, 4],
     "rolling_origin_and_combined": [0, 1, 2],
     "withheld_family": [0, 1, 2, 3, 4],
-    "address_purge": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+    "address_purge_and_leak_injection": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
     "cluster_bootstrap_rng": 12345
   },
-  "threshold_calibration": {"validation_share_of_training_addresses": 0.2, "target_false_positive_rate": 0.01, "rule": "99th percentile of the scores of white validation records"},
-  "bootstrap": {"unit": "address", "resamples": 1000, "resamples_single_year": 500, "interval": "percentile 2.5-97.5"}
+  "threshold_calibration": {"validation_share_of_training_addresses": 0.2, "target_false_positive_rate": 0.01, "rule": "threshold = 99th percentile of the scores of white validation records; a record is flagged when its score is strictly greater than the threshold, so that the validation false-positive rate cannot exceed 1% when scores are tied"},
+  "bootstrap": {"unit": "address", "resamples": 1000, "resamples_single_year": 500, "combined_protocol": "500 resamples per seed, replicates pooled over the three seeds", "withheld_family": "1000 resamples per seed, replicates pooled over the five seeds", "model_comparison": "paired differences on identical resamples", "interval": "percentile 2.5-97.5"},
+  "drift": {"statistic": "two-sample Kolmogorov-Smirnov per topological feature, averaged", "classifier_two_sample_test": "LightGBM (model configuration above), 3-fold cross-validated ROC-AUC, reference versus test records"}
 }

@@ -1,4 +1,4 @@
-"""Loads every result file and computes the statistics quoted in the manuscript. Imported by build5.py; run directly to print them."""
+"""Loads every result file and computes the statistics quoted in the manuscript. Imported by make_tables_figures.py; run directly to print them."""
 import sys, os, json
 import numpy as np, pandas as pd
 from scipy import stats
@@ -7,10 +7,15 @@ def rd(f):
     p = os.path.join(RES, f)
     return pd.read_csv(p) if os.path.exists(p) else pd.DataFrame()
 e0 = json.load(open(RES + '/e0.json'))
-M = pd.concat([rd('main.csv'), rd('main_extra.csv')], ignore_index=True)
-SE = pd.concat([rd('seen.csv'), rd('seen_extra.csv')], ignore_index=True)
+M = pd.concat([rd('main.csv'), rd('main_extra.csv'), rd('main_extra2.csv')], ignore_index=True)
+SE = pd.concat([rd('seen.csv'), rd('seen_extra.csv'), rd('seen_extra2.csv')], ignore_index=True)
 A = rd('attrib.csv'); RO = rd('rolling.csv'); WG = rd('weighted.csv')
-ZV = rd('zeroday_val.csv'); CB = rd('combined.csv'); CF = rd('combined_family.csv'); PU = rd('purge.csv'); RC = rd('rolling_ci.csv')
+def ex(f): return os.path.exists(os.path.join(RES, f))
+ZV = rd('zeroday_val2.csv') if ex('zeroday_val2.csv') else rd('zeroday_val.csv'); ZB = np.load(RES + '/zeroday_boot.npz') if ex('zeroday_boot.npz') else {}
+CB = rd('combined5.csv') if ex('combined5.csv') else rd('combined.csv'); CF = rd('combined5_family.csv') if ex('combined5_family.csv') else rd('combined_family.csv'); CBB = np.load(RES + '/combined5_boot.npz') if ex('combined5_boot.npz') else {}
+DR = rd('combined_drift.csv'); DRW = rd('drift.csv'); OPR = rd('operating_random.csv'); PU = rd('purge.csv'); RC = rd('rolling_ci.csv')
+for d_ in (CB, CF, DR):
+    if len(d_): d_['test'] = d_['test'].astype(str)
 BT = json.load(open(RES + '/bootstrap.json')) if os.path.exists(RES + '/bootstrap.json') else {}
 INJ = rd('inject.csv'); PGG = rd('purge_groups.csv')
 IB = json.load(open(RES + '/inject_bootstrap.json')) if os.path.exists(RES + '/inject_bootstrap.json') else {}
@@ -69,9 +74,44 @@ if len(ZV):
     fs_ = ZV.drop_duplicates('seed'); N['z_fpr_known'] = (float(fs_.fpr_known.min()), float(fs_.fpr_known.max())); N['z_fpr_zero'] = (float(ZV.fpr_zero_day.min()), float(ZV.fpr_zero_day.max())); N['z_seeds'] = int(ZV.seed.nunique())
     t = stats.ttest_rel(ps.tp_k / ps.n_test, ps.tp_z / ps.n_test); N['z_paired_p'] = float(t.pvalue)
 else: zf = pd.DataFrame()
+def pci(a):
+    a = np.asarray(a, float); a = a[~np.isnan(a)]
+    return (float(np.percentile(a, 2.5)), float(np.percentile(a, 97.5))) if len(a) else (float('nan'), float('nan'))
+ZSEEDS = sorted(ZV.seed.unique()) if len(ZV) else []
+def zci(family, kind):
+    """95% interval of the recall of one family: pooled address-level bootstrap replicates of all splits."""
+    return pci(np.concatenate([ZB[f'{s_}|{family}|{kind}'] for s_ in ZSEEDS]))
+if len(ZV) and len(ZB):
+    fams_ = list(zf.index); pk, pz, mk_, mz = [], [], [], []
+    for s_ in ZSEEDS:
+        n_ = sum(ZB[f'{s_}|{k}|n'] for k in fams_); pk.append(sum(ZB[f'{s_}|{k}|tpk'] for k in fams_) / n_); pz.append(sum(ZB[f'{s_}|{k}|tpz'] for k in fams_) / n_)
+        mk_.append(np.mean([ZB[f'{s_}|{k}|known'] for k in fams_], axis=0)); mz.append(np.mean([ZB[f'{s_}|{k}|withheld'] for k in fams_], axis=0))
+    N['z_pool_known_ci'] = pci(np.concatenate(pk)); N['z_pool_zero_ci'] = pci(np.concatenate(pz)); N['z_macro_known_ci'] = pci(np.concatenate(mk_)); N['z_macro_zero_ci'] = pci(np.concatenate(mz))
+    N['z_white_test'] = float(ZV.n_white_test.mean()) if 'n_white_test' in ZV else float('nan')
+    za = ZV.groupby('family')[['n_addr_test']].mean() if 'n_addr_test' in ZV else None
 # combined protocol
 def cb(tag, model, fs, col): return CB[(CB.test == tag) & (CB.model == model) & (CB.fs == fs)][col].mean()
 TAGS = list(dict.fromkeys(CB.test)) if len(CB) else []
+CSEEDS = sorted(CB.seed.unique()) if len(CB) else []
+def creps(tag, model, fs, metric):
+    """Bootstrap replicates of a metric, pooled over seeds; aligned across models because every (test, seed) uses the same resamples."""
+    return np.concatenate([CBB[f'{tag}|{s_}|{model}|{fs}|{metric}'] for s_ in CSEEDS])
+def cci(tag, model, fs, metric): return pci(creps(tag, model, fs, metric))
+def cpair(tag, a, b, metric):
+    """Paired difference a - b (each a (model, fs) pair): mean over seeds and percentile interval of the pooled paired replicates."""
+    return float(cb(tag, a[0], a[1], metric) - cb(tag, b[0], b[1], metric)), pci(creps(tag, a[0], a[1], metric) - creps(tag, b[0], b[1], metric))
+def cgroups(tag, model, fs, col_a='recall_continuing', col_b='recall_emerging'):
+    return float(cb(tag, model, fs, col_a) - cb(tag, model, fs, col_b)), pci(creps(tag, model, fs, col_a) - creps(tag, model, fs, col_b))
+def cfam(tag, model, fs, family):
+    g = CF[(CF.test == tag) & (CF.model == model) & (CF.fs == fs) & (CF.family == family)]
+    return {'n': float(g.n_test.mean()), 'n_addr': float(g.n_addr.mean()) if 'n_addr' in g else float('nan'), 'status': g.status.iloc[0], 'recall': float(g.recall.mean()),
+            'ci': pci(np.concatenate([CBB[f'{tag}|{s_}|{model}|{fs}|fam|{family}'] for s_ in CSEEDS])) if f'{tag}|{CSEEDS[0]}|{model}|{fs}|fam|{family}' in CBB else (float('nan'), float('nan'))}
+def cpooled(model, fs, group, tags):
+    """Recall pooled over several test periods: detected records of the group divided by all records of the group (mean over seeds)."""
+    g = CB[(CB.model == model) & (CB.fs == fs) & CB.test.isin(tags)]; ncol = 'n_' + group; rcol = 'recall_' + group
+    g = g[g[ncol] > 0]; ps = g.groupby('seed').apply(lambda d: (d[rcol] * d[ncol]).sum() / d[ncol].sum())
+    return float(ps.mean()), float(g.groupby('test')[ncol].mean().sum())
+def opr(model, fs, col): return OPR[(OPR.model == model) & (OPR.fs == fs)][col].mean()
 
 if __name__ == '__main__':
     pd.set_option('display.width', 250); pd.set_option('display.max_columns', 40); pd.set_option('display.float_format', lambda v: f'{v:.4f}')

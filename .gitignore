@@ -4,3 +4,4 @@ __pycache__/
 BitcoinHeistData.csv
 splits_check/
 *.npz
+!results/*.npz

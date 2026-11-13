@@ -43,7 +43,7 @@ def fit_val(train, seed):
     a, b = next(GroupShuffleSplit(1, test_size=0.2, random_state=seed).split(train, y[train], groups[train]))
     return train[a], train[b]
 
-# 1) Random protocol (seeds 0-4 for the main experiments, 0-9 for the address-purge experiment)
+# 1) Random protocol (seeds 0-9)
 for seed in range(10):
     tr, te = random_split(seed)
     purged = tr[~np.isin(groups[tr], np.unique(groups[te]))]          # training records whose address is not in the test partition
@@ -83,6 +83,11 @@ for B, test_years, tag in settings:
     for seed in range(3):
         fit, val = fit_val(hist, seed)
         emit(f'combined_test-{tag}_seed{seed}', fit=fit, val=val, test=te, test_emerging=emerging, test_continuing=continuing)
+
+# 6) Further repetitions of the address-disjoint protocol (seeds 5-9; appended so that the earlier manifest rows keep their order)
+for seed in range(5, 10):
+    tr, te = address_split(seed)
+    emit(f'address_seed{seed}', train=tr, test=te)
 
 pd.DataFrame(rows).to_csv(os.path.join(OUT, 'manifest.csv'), index=False)
 print('written', os.path.join(OUT, 'manifest.csv'))
