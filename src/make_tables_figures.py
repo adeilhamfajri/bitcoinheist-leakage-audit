@@ -1,6 +1,6 @@
 """Regenerates every result table and every figure of the paper from the result files.
 Usage: python make_tables_figures.py <results-dir> <out-dir>
-Writes <out-dir>/f1.png ... f5.png (Figs. 1-5) and <out-dir>/tables.md (Tables V-XIV and the statistics quoted in the text)."""
+Writes <out-dir>/f1.png ... f5.png (Figs. 1-5) and <out-dir>/tables.md (Tables V-XV and the statistics quoted in the text)."""
 import sys, os, re, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from msstats import *
@@ -80,21 +80,32 @@ def figures(FIG):
         ax.text(i - 0.2, u + 0.035, f'{u:.2f}', ha='center', fontsize=8, color=INK); ax.text(i + 0.2, v + 0.035, f'{v:.2f}', ha='center', fontsize=8, color=INK)
     ax.set_xticks(np.arange(4)); ax.set_xticklabels(mo4); ax.set_ylim(0, 0.95); ax.set_ylabel('Ransomware recall'); grid(ax)
     ax.legend(frameon=False, ncol=1, loc='upper right', fontsize=8, borderaxespad=0.1); fig.tight_layout(); fig.savefig(FIG + 'f4.png', dpi=300); plt.close(fig)
-    # Fig. 5: combined protocol, recall for emerging and continuing families, three tree ensembles, pooled bootstrap intervals
-    fig, axs = plt.subplots(3, 1, figsize=(3.4, 4.7), sharex=True, sharey=True); xs = np.arange(len(YEARS))
+    # Fig. 5: combined protocol, recall for emerging and continuing families against the realized FPR, three tree ensembles,
+    # pooled-bootstrap intervals; marker fill encodes the size of the group, tick labels give the number of records per group
+    from matplotlib.lines import Line2D; plt.rcParams['mathtext.fontset'] = 'stix'
+    fig, axs = plt.subplots(3, 1, figsize=(3.4, 5.2), sharex=True, sharey=True); xs = np.arange(len(YEARS))
     for ax, mo in zip(axs, ENS):
-        for off, col, ncol, c, mk, lb in ((-0.17, 'recall_emerging', 'n_emerging', COL[1], 's', 'Emerging families'), (0.17, 'recall_continuing', 'n_continuing', COL[0], 'o', 'Continuing families')):
-            first = True
+        ax.axhline(0.01, color='#7a7a7a', lw=0.7, ls=(0, (3, 2)), zorder=1)
+        for off, col, ncol, c, mk in ((-0.17, 'recall_emerging', 'n_emerging', COL[1], 's'), (0.17, 'recall_continuing', 'n_continuing', COL[0], 'o')):
             for i, t_ in enumerate(YEARS):
-                if cb(t_, mo, 'notime', ncol) <= 0: continue
-                v = cb(t_, mo, 'notime', col); lo, hi = cci(t_, mo, 'notime', col)
-                ax.errorbar(i + off, v, yerr=[[max(v - lo, 0)], [max(hi - v, 0)]], fmt=mk, ms=4.2, color=c, ecolor=c, elinewidth=1.0, capsize=2.2, label=lb if first else None); first = False
-        ax.hlines([cb(t_, mo, 'notime', 'fpr') for t_ in YEARS], xs - 0.42, xs + 0.42, color=INK, lw=1.0, label='Realized false-positive rate')
-        ax.text(0.02, 0.86, mo, transform=ax.transAxes, fontsize=9, fontweight='bold'); grid(ax); ax.set_xticks(xs); ax.set_xticklabels(YEARS); ax.set_ylim(bottom=-0.01)
-    axs[1].set_ylabel('Recall at the calibrated threshold'); axs[2].set_xlabel('Test year')
-    h, l = axs[1].get_legend_handles_labels(); o_ = sorted(range(len(l)), key=lambda q: ['Emerging families', 'Continuing families', 'Realized false-positive rate'].index(l[q]))
-    fig.legend([h[q] for q in o_], [l[q] for q in o_], frameon=False, ncol=1, loc='upper center', fontsize=8, bbox_to_anchor=(0.56, 1.0), labelspacing=0.25)
-    fig.tight_layout(rect=(0, 0, 1, 0.9)); fig.savefig(FIG + 'f5.png', dpi=300); plt.close(fig)
+                nn = cb(t_, mo, 'notime', ncol)
+                if nn <= 0: continue
+                v = cb(t_, mo, 'notime', col); lo, hi = cci(t_, mo, 'notime', col); big = nn >= 100
+                ax.errorbar(i + off, v, yerr=[[max(v - lo, 0)], [max(hi - v, 0)]], fmt=mk, ms=4.2, color=c, ecolor=c, elinewidth=1.0, capsize=2.2,
+                            mfc=c if big else 'white', mec=c, mew=1.0, zorder=3)
+        ax.hlines([cb(t_, mo, 'notime', 'fpr') for t_ in YEARS], xs - 0.42, xs + 0.42, color=INK, lw=1.0, zorder=2)
+        ax.text(0.02, 0.86, mo, transform=ax.transAxes, fontsize=9, fontweight='bold'); grid(ax); ax.set_xticks(xs); ax.set_ylim(bottom=-0.01)
+    lab_ = [f"{t_}\n{n(cb(t_, best, 'notime', 'n_emerging')) if cb(t_, best, 'notime', 'n_emerging') > 0 else '–'}\n{n(cb(t_, best, 'notime', 'n_continuing'))}" for t_ in YEARS]
+    axs[2].set_xticklabels(lab_, fontsize=7.2, linespacing=1.15)
+    axs[2].text(-0.135, -0.105, 'Year', transform=axs[2].transAxes, fontsize=7.2, ha='left', va='top')
+    axs[2].text(-0.135, -0.185, '$n_\\mathrm{E}$', transform=axs[2].transAxes, fontsize=7.2, ha='left', va='top', color=COL[1])
+    axs[2].text(-0.135, -0.265, '$n_\\mathrm{C}$', transform=axs[2].transAxes, fontsize=7.2, ha='left', va='top', color=COL[0])
+    axs[1].set_ylabel('Recall at the calibrated threshold')
+    hd = [Line2D([], [], marker='s', color=COL[1], ls='none', ms=4.2), Line2D([], [], marker='o', color=COL[0], ls='none', ms=4.2),
+          Line2D([], [], marker='o', color='#555555', mfc='white', ls='none', ms=4.2), Line2D([], [], color=INK, lw=1.0), Line2D([], [], color='#7a7a7a', lw=0.7, ls=(0, (3, 2)))]
+    fig.legend(hd, ['Emerging families', 'Continuing families', 'Open marker: fewer than 100 records', 'Realized false-positive rate', 'Calibrated false-positive rate (1%)'],
+               frameon=False, ncol=1, loc='upper center', fontsize=7.6, bbox_to_anchor=(0.56, 1.0), labelspacing=0.22)
+    fig.tight_layout(rect=(0, 0, 1, 0.865)); fig.savefig(FIG + 'f5.png', dpi=300); plt.close(fig)
 
 
 # ---------------- tables ----------------
@@ -133,7 +144,7 @@ def tables():
         ['Injection / Topo.', f3(IJt['leaky']), f3(IJt['clean']), cis(IJt['mean'], *IJt['ci']), pp(IJt['p'])],
         ['Purge / All', f3(PGa['full']), f3(PGa['purged']), cis(PGa['mean'], *PGa['ci']), pp(PGa['p'])],
         ['Purge / Topo.', f3(PGb['full']), f3(PGb['purged']), cis(PGb['mean'], *PGb['ci']), pp(PGb['p'])]],
-        note=f'Both models of a pair are scored on identical test records. Injection (leak injection): same-address records are added to the training partition of an address-disjoint split, so both models are trained on repeated addresses ({WORD[IJt["n"]]} splits for the topological features). Purge (address purge): same-address records are deleted from the training partition of a random split, which also removes most repeated addresses from training. Difference = with overlap minus without; paired *t*-test.')
+        note=f'Both models of a pair are scored on identical test records. Injection (leak injection): same-address records are added to the training partition of an address-disjoint split, so both models are trained on repeated addresses ({WORD[IJt["n"]]} splits for the topological features). Purge (address purge): same-address records are deleted from the training partition of a random split, which also removes most repeated addresses from training. Difference = with overlap minus without, averaged over the splits; the 95% CI is the *t*-interval of the mean paired difference, so it describes the variation between splits; paired *t*-test.')
     rows8 = [[fam(k), n(v.n_total), n(v.n_fit), n(v.n_val), n(v.n_test), f3(v.recall_known) + '\n(' + ci3(zci(k, 'known')) + ')', f3(v.recall_zero_day) + '\n(' + ci3(zci(k, 'withheld')) + ')'] for k, v in zf.iterrows()]
     rows8 += [['Pooled, Eq. (2)', n(zf.n_total.sum()), n(zf.n_fit.sum()), n(zf.n_val.sum()), n(zf.n_test.sum()), f3(zk) + '\n(' + ci3(N['z_pool_known_ci']) + ')', f3(zz) + '\n(' + ci3(N['z_pool_zero_ci']) + ')'],
               ['Macro average', '', '', '', '', f3(N['z_macro_known']) + '\n(' + ci3(N['z_macro_known_ci']) + ')', f3(N['z_macro_zero']) + '\n(' + ci3(N['z_macro_zero_ci']) + ')']]
@@ -154,41 +165,56 @@ def tables():
             v = cb(FIX, k, 'notime', mt) * sc; c_ = cci(FIX, k, 'notime', mt); return f(v) + '\n(' + f(c_[0] * sc) + '–' + f(c_[1] * sc) + ')'
         rowsm.append([k, cell('pr_auc'), cell('recall_emerging'), cell('recall_continuing'), f2(100 * cb(FIX, k, 'notime', 'fpr')), f3(cpooled(k, 'notime', 'emerging', YEARS)[0]), f3(cpooled(k, 'notime', 'continuing', YEARS)[0])])
     nE6 = cpooled(best, 'notime', 'emerging', YEARS)[1]; nC6 = cpooled(best, 'notime', 'continuing', YEARS)[1]
-    T['models'] = dict(cap='Combined Protocol for All Classifiers (Topological Features)', header=['Model', 'PR-AUC', '*R*~E~', '*R*~C~', 'FPR (%)', '*R*~E~ six', '*R*~C~ six'], rows=rowsm,
+    T['models'] = dict(cap='Combined Protocol for All Classifiers (Topological Features)', header=['Model', 'PR-AUC', '*R*~E~', '*R*~C~', 'FPR (%)', '*R*~E~^6^', '*R*~C~^6^'], rows=rowsm,
                        widths=[530, 950, 950, 950, 520, 500, 500], opts=dict(sz=15),
-                       note=f'Columns 2–5: training on 2011–2015 and testing on 2016–2018 ({n(ct.loc[FIX].n_emerging)} emerging-family and {n(ct.loc[FIX].n_continuing)} continuing-family records; positive rate {f3(ct.loc[FIX].base_rate)}); mean over three seeds, with the 95% CI of the pooled address-level bootstrap in parentheses (for the FPR the interval is at most ±0.1 percentage points and is omitted). Last two columns: recall pooled over the six yearly origins ({n(nE6)} emerging-family and {n(nC6)} continuing-family records).')
+                       note=f'*R*~E~, *R*~C~ = recall on emerging-family and continuing-family records at the threshold calibrated to 1% FPR on validation data; FPR = realized false-positive rate on the test partition. Columns 2–5: training on 2011–2015 and testing on 2016–2018 ({n(ct.loc[FIX].n_emerging)} emerging-family and {n(ct.loc[FIX].n_continuing)} continuing-family records; positive rate {f3(ct.loc[FIX].base_rate)}); mean over three seeds, with the 95% CI of the pooled address-level bootstrap in parentheses (for the FPR the interval is at most ±0.1 percentage points and is omitted). *R*~E~^6^, *R*~C~^6^ = the same recalls pooled over the six yearly origins 2012–2017, i.e., detected records divided by all records of the group ({n(nE6)} emerging-family and {n(nC6)} continuing-family records).')
     # family-level recall and feature drift under the combined protocol
     rowsf = []; g = DR[DR.test.isin(YEARS) & DR.status.isin(['emerging', 'continuing']) & (DR.n_test >= 100)]
     for _, d_ in g.iterrows():
         cf_ = cfam(d_.test, best, 'notime', d_.group)
-        rowsf.append([d_.test, fam(d_.group), 'E' if d_.status == 'emerging' else 'C', n(d_.n_test), vci(cf_['recall'], cf_['ci']), f3(d_.ks_mean), f3(d_.c2st_auc)])
-    T['families'] = dict(cap=f'Combined Protocol by Family: Recall of {best} (95% CI) and Feature Drift Relative to the Training Data', header=['Test', 'Family', 'Type', '*n*', 'Recall (95% CI)', 'KS', 'AUC'], rows=rowsf,
-                         widths=[420, 1140, 440, 520, 1400, 480, 500], opts=dict(sz=15, left=2),
-                         note='Families with at least 100 test records. E = emerging, C = continuing; *n* = test records with an address unseen in training. Drift is measured between the test records and their reference in the training years (the same family for C, all ransomware for E): KS = Kolmogorov-Smirnov statistic averaged over the six topological features; AUC = cross-validated ROC-AUC of a classifier that separates test from reference records (0.5 = indistinguishable).')
+        rowsf.append([d_.test, fam(d_.group), 'E' if d_.status == 'emerging' else 'C', n(d_.n_test), f3(cf_['recall']) + '\n(' + ci3(cf_['ci']) + ')', f3(d_.ks_mean), f3(d_.c2st_auc) + '\n(' + ci3((d_.c2st_lo, d_.c2st_hi)) + ')'])
+    T['families'] = dict(cap=f'Combined Protocol by Family: Recall of {best} (95% CI) and Feature Drift Relative to the Training Data', header=['Test', 'Family', 'Type', '*n*', 'Recall (95% CI)', 'KS', 'AUC (95% CI)'], rows=rowsf,
+                         widths=[420, 1060, 460, 500, 960, 440, 960], opts=dict(sz=15, left=2),
+                         note='Families with at least 100 test records. E = emerging, C = continuing; *n* = test records with an address unseen in training. Drift is measured between the test records and their reference in the training years (the same family for C, all ransomware for E): KS = Kolmogorov-Smirnov statistic averaged over the six topological features; AUC = ROC-AUC of a classifier two-sample test that separates test from reference records (0.5 = indistinguishable), with three-fold cross-validation in which all records of an address fall into the same fold; the 95% CI is a cluster bootstrap over addresses of the out-of-fold scores.')
     # operational measures at the validation-calibrated operating point
     rowso = []
     def orow(k, src, fs):
-        if src == 'random': al, fp_, tp_, nt = opr(k, fs, 'alerts'), opr(k, fs, 'fp'), opr(k, fs, 'tp'), opr(k, fs, 'n_test'); rc_ = opr(k, fs, 'recall')
-        else: al, fp_, tp_, nt = (cb(FIX, k, fs, c_) for c_ in ('alerts', 'fp', 'tp', 'n_test')); rc_ = cb(FIX, k, fs, 'recall')
-        return [k, f2(1000 * al / nt), f2(1000 * fp_ / nt), f3(tp_ / al), f3(rc_), f1d(fp_ / max(tp_, 1e-9))]
-    for lab_, src, fs in (('*Random split, all features*', 'random', 'all'), ('*Combined protocol 2016–2018, all features*', 'combined', 'all'), ('*Combined protocol 2016–2018, topological features*', 'combined', 'notime')):
-        rowso.append([lab_] + [''] * 5); rowso += [orow(k, src, fs) for k in ENS]
-    T['operational'] = dict(cap='Operational Measures at the Threshold Calibrated to a 1% FPR on Validation Data', header=['Model', 'Alerts per 1,000', 'False positives per 1,000', 'Precision', 'Recall', 'False alerts per true alert'], rows=rowso,
-                            widths=[700, 800, 950, 750, 700, 1000], opts=dict(sz=15),
-                            note='Alerts = test records scored above the threshold, per 1,000 test records; false positives = white records among them. Precision = share of alerts that are ransomware; false alerts per true alert = false positives divided by true positives. Means over three seeds.')
+        o = opst(src, k, fs, FIX)
+        return [k, f2(o['alerts_per_1000']), f2(o['fp_per_1000']), f3(o['precision']), f3(o['recall']), f1d(o['false_per_true']), n(o['alerts']) + ' (' + n(o['tp']) + ')']
+    o_r0, o_c0 = opst('random', best, 'all'), opst('combined', best, 'all', FIX)
+    for lab_, src, fs, o_ in (('*Random split, all features*', 'random', 'all', o_r0), ('*Combined protocol 2016–2018, all features*', 'combined', 'all', o_c0), ('*Combined protocol 2016–2018, topological features*', 'combined', 'notime', o_c0)):
+        rowso.append([lab_ + f' ({n(o_["n_test"])} test records, {n(o_["n_pos"])} ransomware)'] + [''] * 6); rowso += [orow(k, src, fs) for k in ENS]
+    T['operational'] = dict(cap='Operational Measures at the Threshold Calibrated to a 1% FPR on Validation Data', header=['Model', 'Alerts per 1,000', 'False positives per 1,000', 'Precision', 'Recall', 'False alerts per true alert', 'Alerts per split (true)'], rows=rowso,
+                            widths=[560, 580, 720, 700, 560, 700, 1080], opts=dict(sz=15),
+                            note='Denominator of the per-1,000 measures = all test records of the protocol (white and ransomware). Alerts = test records scored above the threshold; false positives = white records among them; true alerts = ransomware records among them. Precision = true alerts / alerts; recall = true alerts / ransomware test records; false alerts per true alert = false positives / true alerts. All rates and ratios are computed from the counts summed over three seeds before rounding; the last column gives the mean number of alerts per split, with the true alerts in parentheses.')
     rowsw = []
     for fs, fl in (('all', 'All'), ('notime', 'Topo.')):
         for s_, sl in (('random', 'Random'), ('address', 'Address'), ('temporal', 'Temporal')):
             rowsw.append([f'{fl} / {sl}', f3(m3(s_, fs)), f3(wg(s_, fs, 'pr_auc')), f3(wg(s_, fs, 'precision')), f3(wg(s_, fs, 'recall'))])
     T['weighting'] = dict(cap=f'{best} with Class Weighting', header=['Features / split', 'PR-AUC (unw.)', 'PR-AUC (w.)', 'Prec. (w.)', 'Recall (w.)'], rows=rowsw, widths=[1400, 950, 900, 800, 850],
                           note='unw. = unweighted model; w. = positive class weighted by the ratio of negative to positive training records. Both columns are means over the same three seeds; Tables VI and VII report ten splits for the random and address-disjoint protocols.')
+    # sensitivity of the uncertainty estimates
+    def srow(label, d, f=f3):
+        lo_, hi_ = d['pooled_ci']; inc = [c_ for c_ in d['cis']]
+        def rg(a, b): return f(a) + (' to ' if a < 0 or b < 0 else '–') + f(b)
+        return [label, str(d['k']), f(d['mean']) + '\n(' + rg(lo_, hi_) + ')', rg(d['pts_min'], d['pts_max']), f'{d["sd_between"]:.4f}', f'{d["se_within"]:.4f}',
+                rg(min(c_[0] for c_ in inc), max(c_[1] for c_ in inc))]
+    def f4(v): return sg(v, 4)
+    SENS = [('Withheld family, known (LGBM)', z_sens('known'), f3), ('Withheld family, withheld (LGBM)', z_sens('withheld'), f3),
+            ('Combined 2016–2018, PR-AUC (XGB)', c_sens(FIX, best, 'notime', 'pr_auc'), f3), ('Combined 2016–2018, *R*~E~ (XGB)', c_sens(FIX, best, 'notime', 'recall_emerging'), f3),
+            ('Combined 2014, *R*~E~ (XGB)', c_sens('2014', best, 'notime', 'recall_emerging'), f3), ('Combined 2017, *R*~C~ (XGB)', c_sens('2017', best, 'notime', 'recall_continuing'), f3),
+            ('ΔPR-AUC RF − XGB, 2016–2018', c_sens(FIX, 'RF', 'notime', 'pr_auc', minus=(best, 'notime')), f4), ('ΔPR-AUC LGBM − XGB, 2016–2018', c_sens(FIX, 'LGBM', 'notime', 'pr_auc', minus=(best, 'notime')), f4)]
+    T['sens_raw'] = SENS
+    T['sensitivity'] = dict(cap='Between-Repetition Variation and Sampling Uncertainty of Key Estimates (Topological Features)', header=['Estimate', '*k*', 'Mean (pooled 95% CI)', 'Range over repetitions', 'SD between', 'SE within', 'Per-repet. 95% CIs'], rows=[srow(a, b, f) for a, b, f in SENS],
+                            widths=[1130, 200, 860, 740, 600, 600, 770], opts=dict(sz=14, left=1),
+                            note='*k* = number of repetitions (address-disjoint splits for the withheld-family protocol, seeds for the combined protocol). SD between = standard deviation of the point estimates over the repetitions; SE within = mean standard deviation of the address-level bootstrap replicates within one repetition; per-repetition 95% CIs = lowest lower and highest upper limit of the intervals computed separately for each repetition. Δ = paired difference on identical resamples.')
     return T
 
 if __name__ == '__main__':
     OUTDIR = sys.argv[2].rstrip('/') + '/'; figures(OUTDIR)
     plain = lambda t: re.sub(r'[*~]', '', str(t)).replace('\n', ' ')
     with open(OUTDIR + 'tables.md', 'w', encoding='utf8') as f:
-        for num, key in (('V', 'audit'), ('VI', 'prauc'), ('VII', 'metrics'), ('VIII', 'overlap'), ('IX', 'withheld'), ('X', 'combined'), ('XI', 'models'), ('XII', 'families'), ('XIII', 'operational'), ('XIV', 'weighting')):
+        for num, key in (('V', 'audit'), ('VI', 'prauc'), ('VII', 'metrics'), ('VIII', 'overlap'), ('IX', 'withheld'), ('X', 'combined'), ('XI', 'models'), ('XII', 'families'), ('XIII', 'operational'), ('XIV', 'weighting'), ('XV', 'sensitivity')):
             t = tables()[key]; f.write(f'### Table {num}. {plain(t["cap"])}\n\n| ' + ' | '.join(plain(h) for h in t['header']) + ' |\n|' + '---|' * len(t['header']) + '\n')
             for r in t['rows']: f.write('| ' + ' | '.join(plain(c) for c in r) + ' |\n')
             f.write('\n' + (plain(t['note']) + '\n\n' if t.get('note') else ''))

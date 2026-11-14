@@ -3,7 +3,7 @@
 Code, model configuration, split definitions, result files, and figure/table scripts for the paper
 
 > A. I. Fajri, M. I. Irawan, and F. Mahananto, "Leakage-Aware Evaluation of Ransomware Address Detection on the
-> BitcoinHeist Dataset: Address-Disjoint, Temporal, and Zero-Day Benchmarks," submitted to *JOIV: International
+> BitcoinHeist Dataset: Address-Disjoint, Temporal, and Unseen-Family Benchmarks," submitted to *JOIV: International
 > Journal on Informatics Visualization*.
 
 The paper audits the BitcoinHeist dataset for two leakage channels (address overlap and a calendar shortcut) and
@@ -19,9 +19,10 @@ CSV file with the scripts in `src/`.
 | `src/03_revision_experiments.py` | Withheld-family protocol with validation-calibrated thresholds; combined temporal + address-disjoint + emerging-family protocol; paired address-purge experiment; cluster bootstrap; seeds 3-4 of the main experiment |
 | `src/04_overlap_isolation.py` | Paired leak-injection experiment on the address-disjoint split and decomposition of the address-purge effect by seen and unseen addresses |
 | `src/05_second_revision_experiments.py` | Combined protocol for all five classifiers with address-level bootstrap replicates; withheld-family protocol with bootstrap replicates; calibrated operating point under the random split; seeds 5-9 of the random and address-disjoint protocols; feature drift between periods |
-| `src/06_combined_drift.py` | Feature drift of every test group of the combined protocol relative to its training reference (Kolmogorov-Smirnov statistics and a classifier two-sample test) |
+| `src/06_combined_drift.py` | Feature drift of every test group of the combined protocol relative to its training reference (Kolmogorov-Smirnov statistics and a classifier two-sample test with record-level folds) |
+| `src/07_grouped_two_sample_test.py` | The same drift measures with address-grouped cross-validation folds and a cluster-bootstrap CI of the two-sample-test ROC-AUC (used in the paper); record-level folds as sensitivity analysis |
 | `src/make_splits.py` | Regenerates the train / validation / test record indices of every protocol and their SHA-256 checksums |
-| `src/make_tables_figures.py`, `src/msstats.py` | Regenerate Tables V-XIV, Figs. 1-5, and every statistic quoted in the text from the result files |
+| `src/make_tables_figures.py`, `src/msstats.py` | Regenerate Tables V-XV, Figs. 1-5, and every statistic quoted in the text from the result files |
 | `config/models.json` | Complete model, preprocessing, seed, calibration, and bootstrap configuration |
 | `splits/manifest.csv` | Size, number of ransomware records, and SHA-256 checksum of every index array |
 | `results/` | Result files produced by the six experiment scripts (inputs of the tables and figures) |
@@ -43,7 +44,8 @@ cd bitcoinheist-leakage-audit
 
 ```bash
 python -m venv .venv && source .venv/bin/activate      # Python 3.13
-pip install -r requirements.txt
+pip install -r requirements.txt          # exact versions of the direct dependencies
+# or: pip install -r requirements-lock.txt  # every package pinned, as used for the clean-room check below
 ```
 
 ## Reproducing the paper
@@ -51,13 +53,14 @@ pip install -r requirements.txt
 ```bash
 DATA=/path/to/BitcoinHeistData.csv
 
-# 1. Experiments (about 6 hours in total on a two-core CPU with 8 GB RAM; no GPU needed)
+# 1. Experiments (about 6.5 hours in total on a two-core CPU with 8 GB RAM; no GPU needed)
 python src/01_main_experiments.py     $DATA results
 python src/02_rolling_weighting.py    $DATA results
 python src/03_revision_experiments.py $DATA results
 python src/04_overlap_isolation.py    $DATA results
 python src/05_second_revision_experiments.py $DATA results
 python src/06_combined_drift.py       $DATA results
+python src/07_grouped_two_sample_test.py $DATA results
 
 # 2. Tables, figures, and statistics
 python src/make_tables_figures.py results figures
@@ -87,9 +90,11 @@ accepts the stages `R5` (drift between periods), `R1` (combined protocol, resuma
 | `zeroday_val2.csv`, `zeroday_boot.npz` | 05 | Withheld-family protocol with confidence intervals (Table IX) |
 | `combined5.csv`, `combined5_boot.npz` | 05 | Combined protocol for five classifiers, bootstrap replicates of every metric (Tables X, XI, and XIII, Fig. 5) |
 | `combined5_family.csv` | 05 | Combined protocol by family (Table XII) |
-| `combined_drift.csv`, `drift.csv` | 06, 05 | Feature drift of the test groups and between periods (Table XII) |
+| `combined_drift2.csv` | 07 | Feature drift of the test groups with address-grouped two-sample tests and CIs (Table XII) |
+| `combined_drift.csv`, `drift.csv` | 06, 05 | Feature drift with record-level folds (sensitivity analysis) and between consecutive periods (not used in the tables) |
 | `operating_random.csv` | 05 | Calibrated operating point under the random split (Table XIII) |
 | `weighted.csv` | 02 | Class weighting (Table XIV) |
+| `combined5_boot.npz`, `zeroday_boot.npz` | 05 | Also the input of Table XV (per-repetition and pooled intervals) |
 | `zeroday_val.csv`, `combined.csv`, `combined_family.csv` | 03 | Superseded by the files of script 05 (two classifiers only, no bootstrap replicates, threshold rule `score >= threshold`). Kept for transparency, not used in the paper |
 | `zeroday.csv` | 01 | Superseded: thresholds calibrated on test records. Kept for transparency, not used in the paper |
 
@@ -97,6 +102,23 @@ The `.npz` files hold the bootstrap replicates. Keys of `combined5_boot.npz` are
 `<test>|<seed>|<model>|<feature set>|<metric>` (and `...|fam|<family>` for the recall of one family); keys of
 `zeroday_boot.npz` are `<seed>|<family>|<quantity>` with the quantities `known` and `withheld` (recall), `n` (test
 records), and `tpk` and `tpz` (detected records when the family is known and when it is withheld).
+
+## Clean-room reproduction check
+
+The repository was tested from a fresh clone in a new virtual environment (Python 3.13.18, Linux x86-64, two CPU
+cores, `pip install -r requirements.txt`; the resulting environment is listed in `requirements-lock.txt`) on
+14 November 2026:
+
+| Check | Result |
+|---|---|
+| `make_tables_figures.py results <dir>` against `figures/tables.md` | identical (every table and every statistic quoted in the paper) |
+| Figures regenerated from `results/` | same content; PNG files differ only in anti-aliasing at the pixel level |
+| `06_combined_drift.py` rerun on the raw CSV, against `results/combined_drift.csv` | identical |
+| `04_overlap_isolation.py` rerun on the raw CSV (20 XGBoost fits), against `results/inject.csv`, `purge_groups.csv`, `inject_bootstrap.json` | identical to the last digit |
+| `make_splits.py`, against `splits/manifest.csv` | identical SHA-256 checksums for every index array |
+
+The remaining experiment scripts use the same seeds and library versions; together they take about 6.5 hours on
+the hardware above.
 
 ## Evaluation protocols
 

@@ -103,7 +103,7 @@ Training on all years before the test period; test records restricted to address
 
 ### Table XI. Combined Protocol for All Classifiers (Topological Features)
 
-| Model | PR-AUC | RE | RC | FPR (%) | RE six | RC six |
+| Model | PR-AUC | RE | RC | FPR (%) | RE^6^ | RC^6^ |
 |---|---|---|---|---|---|---|
 | LR | 0.015 (0.015–0.016) | 0.009 (0.008–0.011) | 0.019 (0.000–0.052) | 1.58 | 0.020 | 0.043 |
 | DT | 0.023 (0.022–0.024) | 0.018 (0.013–0.023) | 0.022 (0.000–0.051) | 1.24 | 0.025 | 0.068 |
@@ -111,45 +111,45 @@ Training on all years before the test period; test records restricted to address
 | XGB | 0.027 (0.026–0.028) | 0.023 (0.020–0.026) | 0.042 (0.000–0.088) | 1.10 | 0.044 | 0.091 |
 | LGBM | 0.026 (0.025–0.027) | 0.023 (0.019–0.026) | 0.048 (0.000–0.083) | 1.05 | 0.044 | 0.080 |
 
-Columns 2–5: training on 2011–2015 and testing on 2016–2018 (18,851 emerging-family and 104 continuing-family records; positive rate 0.018); mean over three seeds, with the 95% CI of the pooled address-level bootstrap in parentheses (for the FPR the interval is at most ±0.1 percentage points and is omitted). Last two columns: recall pooled over the six yearly origins (24,660 emerging-family and 14,139 continuing-family records).
+RE, RC = recall on emerging-family and continuing-family records at the threshold calibrated to 1% FPR on validation data; FPR = realized false-positive rate on the test partition. Columns 2–5: training on 2011–2015 and testing on 2016–2018 (18,851 emerging-family and 104 continuing-family records; positive rate 0.018); mean over three seeds, with the 95% CI of the pooled address-level bootstrap in parentheses (for the FPR the interval is at most ±0.1 percentage points and is omitted). RE^6^, RC^6^ = the same recalls pooled over the six yearly origins 2012–2017, i.e., detected records divided by all records of the group (24,660 emerging-family and 14,139 continuing-family records).
 
 ### Table XII. Combined Protocol by Family: Recall of XGB (95% CI) and Feature Drift Relative to the Training Data
 
-| Test | Family | Type | n | Recall (95% CI) | KS | AUC |
+| Test | Family | Type | n | Recall (95% CI) | KS | AUC (95% CI) |
 |---|---|---|---|---|---|---|
-| 2012 | CryptoLocker | C | 429 | 0.045 (0.011–0.130) | 0.196 | 0.781 |
-| 2013 | CryptoLocker | C | 6,691 | 0.057 (0.045–0.070) | 0.154 | 0.862 |
-| 2014 | CryptoWall | E | 9,157 | 0.074 (0.061–0.088) | 0.129 | 0.827 |
-| 2015 | NoobCrypt | C | 113 | 0.035 (0.000–0.089) | 0.126 | 0.729 |
-| 2015 | CryptoWall | C | 3,232 | 0.018 (0.010–0.025) | 0.227 | 0.963 |
-| 2016 | CryptXXX | E | 2,419 | 0.019 (0.010–0.031) | 0.232 | 0.992 |
-| 2016 | DMALocker | C | 102 | 0.042 (0.000–0.091) | 0.210 | 0.810 |
-| 2016 | DMALockerv3 | E | 193 | 0.052 (0.010–0.112) | 0.224 | 0.938 |
-| 2016 | Cerber | E | 6,043 | 0.003 (0.002–0.004) | 0.259 | 0.964 |
-| 2016 | Locky | E | 6,585 | 0.052 (0.045–0.060) | 0.190 | 0.961 |
-| 2017 | DMALockerv3 | C | 129 | 0.072 (0.009–0.160) | 0.130 | 0.739 |
-| 2017 | Cerber | C | 3,180 | 0.247 (0.221–0.270) | 0.115 | 0.852 |
+| 2012 | CryptoLocker | C | 429 | 0.045 (0.011–0.130) | 0.196 | 0.580 (0.392–0.713) |
+| 2013 | CryptoLocker | C | 6,691 | 0.057 (0.045–0.070) | 0.154 | 0.693 (0.656–0.724) |
+| 2014 | CryptoWall | E | 9,157 | 0.074 (0.061–0.088) | 0.129 | 0.799 (0.773–0.820) |
+| 2015 | NoobCrypt | C | 113 | 0.035 (0.000–0.089) | 0.126 | 0.663 (0.520–0.749) |
+| 2015 | CryptoWall | C | 3,232 | 0.018 (0.010–0.025) | 0.227 | 0.961 (0.953–0.968) |
+| 2016 | CryptXXX | E | 2,419 | 0.019 (0.010–0.031) | 0.232 | 0.991 (0.986–0.994) |
+| 2016 | DMALocker | C | 102 | 0.042 (0.000–0.091) | 0.210 | 0.255 (0.080–0.919) |
+| 2016 | DMALockerv3 | E | 193 | 0.052 (0.010–0.112) | 0.224 | 0.879 (0.837–0.926) |
+| 2016 | Cerber | E | 6,043 | 0.003 (0.002–0.004) | 0.259 | 0.962 (0.959–0.966) |
+| 2016 | Locky | E | 6,585 | 0.052 (0.045–0.060) | 0.190 | 0.961 (0.957–0.965) |
+| 2017 | DMALockerv3 | C | 129 | 0.072 (0.009–0.160) | 0.130 | 0.598 (0.401–0.787) |
+| 2017 | Cerber | C | 3,180 | 0.247 (0.221–0.270) | 0.115 | 0.850 (0.842–0.857) |
 
-Families with at least 100 test records. E = emerging, C = continuing; n = test records with an address unseen in training. Drift is measured between the test records and their reference in the training years (the same family for C, all ransomware for E): KS = Kolmogorov-Smirnov statistic averaged over the six topological features; AUC = cross-validated ROC-AUC of a classifier that separates test from reference records (0.5 = indistinguishable).
+Families with at least 100 test records. E = emerging, C = continuing; n = test records with an address unseen in training. Drift is measured between the test records and their reference in the training years (the same family for C, all ransomware for E): KS = Kolmogorov-Smirnov statistic averaged over the six topological features; AUC = ROC-AUC of a classifier two-sample test that separates test from reference records (0.5 = indistinguishable), with three-fold cross-validation in which all records of an address fall into the same fold; the 95% CI is a cluster bootstrap over addresses of the out-of-fold scores.
 
 ### Table XIII. Operational Measures at the Threshold Calibrated to a 1% FPR on Validation Data
 
-| Model | Alerts per 1,000 | False positives per 1,000 | Precision | Recall | False alerts per true alert |
-|---|---|---|---|---|---|
-| Random split, all features |  |  |  |  |  |
-| RF | 16.82 | 9.82 | 0.416 | 0.493 | 1.4 |
-| XGB | 17.32 | 9.90 | 0.429 | 0.523 | 1.3 |
-| LGBM | 17.20 | 9.89 | 0.425 | 0.515 | 1.4 |
-| Combined protocol 2016–2018, all features |  |  |  |  |  |
-| RF | 10.86 | 10.04 | 0.076 | 0.046 | 12.2 |
-| XGB | 10.66 | 9.87 | 0.074 | 0.045 | 12.5 |
-| LGBM | 10.13 | 9.37 | 0.074 | 0.043 | 12.4 |
-| Combined protocol 2016–2018, topological features |  |  |  |  |  |
-| RF | 11.85 | 11.49 | 0.031 | 0.021 | 31.4 |
-| XGB | 11.18 | 10.77 | 0.037 | 0.023 | 26.2 |
-| LGBM | 10.77 | 10.36 | 0.038 | 0.023 | 25.5 |
+| Model | Alerts per 1,000 | False positives per 1,000 | Precision | Recall | False alerts per true alert | Alerts per split (true) |
+|---|---|---|---|---|---|---|
+| Random split, all features (875,010 test records, 12,424 ransomware) |  |  |  |  |  |  |
+| RF | 16.82 | 9.82 | 0.416 | 0.493 | 1.4 | 14,716 (6,125) |
+| XGB | 17.32 | 9.90 | 0.429 | 0.523 | 1.3 | 15,157 (6,496) |
+| LGBM | 17.20 | 9.89 | 0.425 | 0.515 | 1.4 | 15,048 (6,396) |
+| Combined protocol 2016–2018, all features (1,068,307 test records, 18,955 ransomware) |  |  |  |  |  |  |
+| RF | 10.86 | 10.04 | 0.076 | 0.046 | 12.2 | 11,606 (877) |
+| XGB | 10.66 | 9.87 | 0.074 | 0.045 | 12.5 | 11,392 (845) |
+| LGBM | 10.13 | 9.37 | 0.074 | 0.043 | 12.4 | 10,819 (806) |
+| Combined protocol 2016–2018, topological features (1,068,307 test records, 18,955 ransomware) |  |  |  |  |  |  |
+| RF | 11.85 | 11.49 | 0.031 | 0.021 | 31.4 | 12,662 (390) |
+| XGB | 11.18 | 10.77 | 0.037 | 0.023 | 26.2 | 11,942 (439) |
+| LGBM | 10.77 | 10.36 | 0.038 | 0.023 | 25.5 | 11,504 (434) |
 
-Alerts = test records scored above the threshold, per 1,000 test records; false positives = white records among them. Precision = share of alerts that are ransomware; false alerts per true alert = false positives divided by true positives. Means over three seeds.
+Denominator of the per-1,000 measures = all test records of the protocol (white and ransomware). Alerts = test records scored above the threshold; false positives = white records among them; true alerts = ransomware records among them. Precision = true alerts / alerts; recall = true alerts / ransomware test records; false alerts per true alert = false positives / true alerts. All rates and ratios are computed from the counts summed over three seeds before rounding; the last column gives the mean number of alerts per split, with the true alerts in parentheses.
 
 ### Table XIV. XGB with Class Weighting
 
@@ -164,6 +164,21 @@ Alerts = test records scored above the threshold, per 1,000 test records; false 
 
 unw. = unweighted model; w. = positive class weighted by the ratio of negative to positive training records. Both columns are means over the same three seeds; Tables VI and VII report ten splits for the random and address-disjoint protocols.
 
+### Table XV. Between-Repetition Variation and Sampling Uncertainty of Key Estimates (Topological Features)
+
+| Estimate | k | Mean (pooled 95% CI) | Range over repetitions | SD between | SE within | Per-repet. 95% CIs |
+|---|---|---|---|---|---|---|
+| Withheld family, known (LGBM) | 5 | 0.196 (0.175–0.230) | 0.186–0.222 | 0.0145 | 0.0074 | 0.169–0.236 |
+| Withheld family, withheld (LGBM) | 5 | 0.021 (0.017–0.026) | 0.019–0.022 | 0.0013 | 0.0021 | 0.016–0.027 |
+| Combined 2016–2018, PR-AUC (XGB) | 3 | 0.027 (0.026–0.028) | 0.027–0.027 | 0.0004 | 0.0004 | 0.026–0.028 |
+| Combined 2016–2018, RE (XGB) | 3 | 0.023 (0.020–0.026) | 0.021–0.025 | 0.0015 | 0.0012 | 0.019–0.027 |
+| Combined 2014, RE (XGB) | 3 | 0.074 (0.061–0.088) | 0.072–0.075 | 0.0014 | 0.0065 | 0.060–0.088 |
+| Combined 2017, RC (XGB) | 3 | 0.241 (0.216–0.263) | 0.226–0.250 | 0.0130 | 0.0075 | 0.212–0.266 |
+| ΔPR-AUC RF − XGB, 2016–2018 | 3 | −0.0015 (−0.0023 to −0.0005) | −0.0021 to −0.0007 | 0.0007 | 0.0002 | −0.0024 to −0.0004 |
+| ΔPR-AUC LGBM − XGB, 2016–2018 | 3 | −0.0007 (−0.0010 to −0.0003) | −0.0009 to −0.0004 | 0.0002 | 0.0001 | −0.0011 to −0.0003 |
+
+k = number of repetitions (address-disjoint splits for the withheld-family protocol, seeds for the combined protocol). SD between = standard deviation of the point estimates over the repetitions; SE within = mean standard deviation of the address-level bootstrap replicates within one repetition; per-repetition 95% CIs = lowest lower and highest upper limit of the intervals computed separately for each repetition. Δ = paired difference on identical resamples.
+
 ### Statistics quoted in the text
 
 ```
@@ -174,6 +189,7 @@ unw. = unweighted model; w. = positive class weighted by the ratio of negative t
  "pi_addr_max": 0.015359968553315385,
  "n_test_addr_min": 873429,
  "n_test_addr_max": 876179,
+ "n_addr_splits": 10,
  "pi_temp": 0.01771814070724294,
  "n_test_temp": 1079120,
  "pos_test_temp": 19120,

@@ -13,8 +13,9 @@ A = rd('attrib.csv'); RO = rd('rolling.csv'); WG = rd('weighted.csv')
 def ex(f): return os.path.exists(os.path.join(RES, f))
 ZV = rd('zeroday_val2.csv') if ex('zeroday_val2.csv') else rd('zeroday_val.csv'); ZB = np.load(RES + '/zeroday_boot.npz') if ex('zeroday_boot.npz') else {}
 CB = rd('combined5.csv') if ex('combined5.csv') else rd('combined.csv'); CF = rd('combined5_family.csv') if ex('combined5_family.csv') else rd('combined_family.csv'); CBB = np.load(RES + '/combined5_boot.npz') if ex('combined5_boot.npz') else {}
-DR = rd('combined_drift.csv'); DRW = rd('drift.csv'); OPR = rd('operating_random.csv'); PU = rd('purge.csv'); RC = rd('rolling_ci.csv')
-for d_ in (CB, CF, DR):
+DR = rd('combined_drift2.csv') if ex('combined_drift2.csv') else rd('combined_drift.csv');   # address-grouped C2ST (third revision); combined_drift.csv = record-level folds
+DR0 = rd('combined_drift.csv'); DRW = rd('drift.csv'); OPR = rd('operating_random.csv'); PU = rd('purge.csv'); RC = rd('rolling_ci.csv')
+for d_ in (CB, CF, DR, DR0):
     if len(d_): d_['test'] = d_['test'].astype(str)
 BT = json.load(open(RES + '/bootstrap.json')) if os.path.exists(RES + '/bootstrap.json') else {}
 INJ = rd('inject.csv'); PGG = rd('purge_groups.csv')
@@ -35,7 +36,7 @@ def at(split, fs, metric): return A[(A.split == split) & (A.fs == fs) & (A.model
 N = {}
 gr = M[M.split == 'random']; N['pi_random'] = float((gr.pos_test / gr.n_test).mean()); N['maj'] = 1 - N['pi_random']
 ga = M[M.split == 'address'].drop_duplicates(['seed']); N['pi_addr_min'] = float((ga.pos_test / ga.n_test).min()); N['pi_addr_max'] = float((ga.pos_test / ga.n_test).max())
-N['n_test_addr_min'] = int(ga.n_test.min()); N['n_test_addr_max'] = int(ga.n_test.max())
+N['n_test_addr_min'] = int(ga.n_test.min()); N['n_test_addr_max'] = int(ga.n_test.max()); N['n_addr_splits'] = int(len(ga))
 gt = M[M.split == 'temporal']; N['pi_temp'] = float((gt.pos_test / gt.n_test).mean()); N['n_test_temp'] = int(gt.n_test.iloc[0]); N['pos_test_temp'] = int(gt.pos_test.iloc[0]); N['n_train_temp'] = int(gt.n_train.iloc[0])
 info = M.groupby('split')[['test_pos_seen_addr', 'test_rows_seen_addr']].mean()
 N['pos_seen'] = float(info.loc['random', 'test_pos_seen_addr']); N['rows_seen'] = float(info.loc['random', 'test_rows_seen_addr'])
@@ -112,6 +113,34 @@ def cpooled(model, fs, group, tags):
     g = g[g[ncol] > 0]; ps = g.groupby('seed').apply(lambda d: (d[rcol] * d[ncol]).sum() / d[ncol].sum())
     return float(ps.mean()), float(g.groupby('test')[ncol].mean().sum())
 def opr(model, fs, col): return OPR[(OPR.model == model) & (OPR.fs == fs)][col].mean()
+def opst(src, model, fs, tag=None):
+    """Operational measures from counts pooled over the repetitions (ratios of sums, so that every rate and ratio uses the same
+    unrounded totals). Absolute counts are means per repetition. src = 'random' (validation-calibrated operating point under the
+    random split) or 'combined' (combined protocol, test period tag)."""
+    g = OPR[(OPR.model == model) & (OPR.fs == fs)] if src == 'random' else CB[(CB.test == tag) & (CB.model == model) & (CB.fs == fs)]
+    S_ = {c: float(g[c].sum()) for c in ('n_test', 'n_white_test', 'pos_test', 'alerts', 'tp', 'fp')}; r = len(g)
+    return {'reps': r, 'n_test': S_['n_test'] / r, 'n_white': S_['n_white_test'] / r, 'n_pos': S_['pos_test'] / r, 'alerts': S_['alerts'] / r, 'tp': S_['tp'] / r, 'fp': S_['fp'] / r,
+            'alerts_per_1000': 1000 * S_['alerts'] / S_['n_test'], 'fp_per_1000': 1000 * S_['fp'] / S_['n_test'], 'precision': S_['tp'] / S_['alerts'], 'recall': S_['tp'] / S_['pos_test'],
+            'fpr': S_['fp'] / S_['n_white_test'], 'false_per_true': S_['fp'] / S_['tp'], 'alerts_per_find': S_['alerts'] / S_['tp']}
+# ---------------- sensitivity of the uncertainty estimates: per-repetition intervals against pooled intervals ----------------
+def sens(pts, reps):
+    """pts: point estimate of each repetition; reps: bootstrap replicates of each repetition (same order)."""
+    pts = np.asarray(pts, float); cis = [pci(r_) for r_ in reps]
+    return {'mean': float(pts.mean()), 'pooled_ci': pci(np.concatenate(reps)), 'pts_min': float(pts.min()), 'pts_max': float(pts.max()), 'sd_between': float(pts.std(ddof=1)),
+            'se_within': float(np.mean([np.nanstd(r_, ddof=1) for r_ in reps])), 'cis': cis, 'k': len(pts)}
+def z_sens(kind):
+    """Pooled withheld-family recall (Eq. 2) per split, kind = 'known' or 'withheld'."""
+    fams_ = list(zf.index); col = 'recall_known' if kind == 'known' else 'recall_zero_day'; key = 'tpk' if kind == 'known' else 'tpz'; pts, reps = [], []
+    for s_ in ZSEEDS:
+        g = ZV[ZV.seed == s_]; pts.append(float((g[col] * g.n_test).sum() / g.n_test.sum()))
+        reps.append(sum(ZB[f'{s_}|{k}|{key}'] for k in fams_) / sum(ZB[f'{s_}|{k}|n'] for k in fams_))
+    return sens(pts, reps)
+def c_sens(tag, model, fs, metric, minus=None):
+    """Combined protocol per seed; minus = (model, fs) gives the paired difference on identical resamples."""
+    def pt(mo, f_, s_): return float(CB[(CB.test == tag) & (CB.model == mo) & (CB.fs == f_) & (CB.seed == s_)][metric].iloc[0])
+    pts = [pt(model, fs, s_) - (pt(*minus, s_) if minus else 0.0) for s_ in CSEEDS]
+    reps = [CBB[f'{tag}|{s_}|{model}|{fs}|{metric}'] - (CBB[f'{tag}|{s_}|{minus[0]}|{minus[1]}|{metric}'] if minus else 0.0) for s_ in CSEEDS]
+    return sens(pts, reps)
 
 if __name__ == '__main__':
     pd.set_option('display.width', 250); pd.set_option('display.max_columns', 40); pd.set_option('display.float_format', lambda v: f'{v:.4f}')
