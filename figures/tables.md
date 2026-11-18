@@ -61,31 +61,33 @@ Acc. = accuracy; Prec. = precision; Rec. = recall. Precision, recall, F1, and MC
 
 ### Table VIII. Paired Tests of the Effect of Address Overlap on PR-AUC (XGB, Ten Splits)
 
-| Experiment / features | With overlap | Without | Difference (95% CI) | p |
+| Features | With overlap | Without overlap | Difference (95% CI) | p |
 |---|---|---|---|---|
-| Injection / All | 0.510 | 0.511 | −0.001 (−0.004 to +0.003) | 0.65 |
-| Injection / Topo. | 0.138 | 0.143 | −0.005 (−0.006 to −0.003) | < 0.001 |
-| Purge / All | 0.495 | 0.413 | +0.082 (+0.079 to +0.085) | < 0.001 |
-| Purge / Topo. | 0.143 | 0.117 | +0.026 (+0.025 to +0.027) | < 0.001 |
+| Leak injection: same-address records added to the training partition of an address-disjoint split |  |  |  |  |
+| All | 0.510 | 0.511 | −0.001 (−0.004 to +0.003) | 0.65 |
+| Topological | 0.138 | 0.143 | −0.005 (−0.006 to −0.003) | < 0.001 |
+| Address purge: same-address records deleted from the training partition of a random split |  |  |  |  |
+| All | 0.495 | 0.413 | +0.082 (+0.079 to +0.085) | < 0.001 |
+| Topological | 0.143 | 0.117 | +0.026 (+0.025 to +0.027) | < 0.001 |
 
-Both models of a pair are scored on identical test records. Injection (leak injection): same-address records are added to the training partition of an address-disjoint split, so both models are trained on repeated addresses (five splits for the topological features). Purge (address purge): same-address records are deleted from the training partition of a random split, which also removes most repeated addresses from training. Difference = with overlap minus without; paired t-test.
+Both models of a pair are scored on identical test records. Leak injection changes only the overlap: the address-disjoint training records are kept and the same-address records are added, so the difference measures the effect of overlap (five splits for the topological features). Address purge changes the overlap and the training population at the same time, because the deletion removes most repeated-address ransomware records from training; its difference is therefore not a measure of leakage. Difference = with overlap minus without, averaged over the splits; the 95% CI is the t-interval of the mean paired difference, so it describes the variation between splits; paired t-test.
 
 ### Table IX. Withheld-Family Protocol: Records per Family and Recall (95% CI) at a Validation-Calibrated 1% FPR
 
-| Family | Total | Fit | Val. | Test | Known | Withheld |
-|---|---|---|---|---|---|---|
-| CryptoWall | 12,390 | 6,847 | 1,851 | 3,692 | 0.074 (0.053–0.103) | 0.021 (0.014–0.033) |
-| CryptoLocker | 9,315 | 5,118 | 1,194 | 3,003 | 0.056 (0.040–0.077) | 0.031 (0.021–0.043) |
-| Cerber | 9,223 | 5,158 | 1,297 | 2,767 | 0.322 (0.293–0.347) | 0.004 (0.002–0.008) |
-| Locky | 6,625 | 3,724 | 926 | 1,975 | 0.287 (0.263–0.316) | 0.026 (0.018–0.035) |
-| CryptXXX | 2,419 | 1,359 | 352 | 708 | 0.727 (0.675–0.780) | 0.005 (0.000–0.015) |
-| NoobCrypt | 483 | 285 | 37 | 160 | 0.036 (0.000–0.080) | 0.027 (0.000–0.057) |
-| DMALockerv3 | 354 | 178 | 81 | 94 | 0.150 (0.000–0.390) | 0.144 (0.000–0.359) |
-| DMALocker | 251 | 107 | 45 | 99 | 0.166 (0.000–0.307) | 0.165 (0.000–0.307) |
-| Pooled, Eq. (2) | 41,060 | 22,776 | 5,786 | 12,498 | 0.196 (0.175–0.230) | 0.021 (0.017–0.026) |
-| Macro average |  |  |  |  | 0.227 (0.195–0.266) | 0.053 (0.019–0.092) |
+| Family | Total | Train | Test | Recall, known | Recall, withheld |
+|---|---|---|---|---|---|
+| CryptoWall | 12,390 | 8,698 | 3,692 | 0.074 (0.053–0.103) | 0.021 (0.014–0.033) |
+| CryptoLocker | 9,315 | 6,312 | 3,003 | 0.056 (0.040–0.077) | 0.031 (0.021–0.043) |
+| Cerber | 9,223 | 6,456 | 2,767 | 0.322 (0.293–0.347) | 0.004 (0.002–0.008) |
+| Locky | 6,625 | 4,650 | 1,975 | 0.287 (0.263–0.316) | 0.026 (0.018–0.035) |
+| CryptXXX | 2,419 | 1,711 | 708 | 0.727 (0.675–0.780) | 0.005 (0.000–0.015) |
+| NoobCrypt | 483 | 323 | 160 | 0.036 (0.000–0.080) | 0.027 (0.000–0.057) |
+| DMALockerv3 | 354 | 260 | 94 | 0.150 (0.000–0.390) | 0.144 (0.000–0.359) |
+| DMALocker | 251 | 152 | 99 | 0.166 (0.000–0.307) | 0.165 (0.000–0.307) |
+| Pooled, Eq. (2) | 41,060 | 28,562 | 12,498 | 0.196 (0.175–0.230) | 0.021 (0.017–0.026) |
+| Macro average | – | – | – | 0.227 (0.195–0.266) | 0.053 (0.019–0.092) |
 
-Total = ransomware records of the family in the complete dataset; Fit, Val., Test = mean number in the fitting, validation, and test parts over five address-disjoint splits. Every test partition also contains about 862,653 white records, which determine the realized FPR. Known = family present in the fitting part; Withheld = family removed from it. Recall is the mean over the splits; the 95% CI is the percentile interval of the address-level bootstrap replicates pooled over the splits.
+Total = ransomware records of the family in the complete dataset; Train, Test = mean number in the training partition (fitting and validation parts, divided 80%/20% by address) and in the test partition over five address-disjoint splits. Every test partition also contains about 862,653 white records, which determine the realized FPR. Known = family present in the fitting part; Withheld = family removed from it. Recall is the mean over the splits; the 95% CI is the percentile interval of the address-level bootstrap replicates pooled over the splits.
 
 ### Table X. Combined Temporal, Address-Disjoint, and Emerging-Family Protocol (XGB)
 
@@ -103,15 +105,22 @@ Training on all years before the test period; test records restricted to address
 
 ### Table XI. Combined Protocol for All Classifiers (Topological Features)
 
-| Model | PR-AUC | RE | RC | FPR (%) | RE^6^ | RC^6^ |
-|---|---|---|---|---|---|---|
-| LR | 0.015 (0.015–0.016) | 0.009 (0.008–0.011) | 0.019 (0.000–0.052) | 1.58 | 0.020 | 0.043 |
-| DT | 0.023 (0.022–0.024) | 0.018 (0.013–0.023) | 0.022 (0.000–0.051) | 1.24 | 0.025 | 0.068 |
-| RF | 0.025 (0.025–0.026) | 0.020 (0.016–0.024) | 0.058 (0.000–0.099) | 1.17 | 0.038 | 0.100 |
-| XGB | 0.027 (0.026–0.028) | 0.023 (0.020–0.026) | 0.042 (0.000–0.088) | 1.10 | 0.044 | 0.091 |
-| LGBM | 0.026 (0.025–0.027) | 0.023 (0.019–0.026) | 0.048 (0.000–0.083) | 1.05 | 0.044 | 0.080 |
+| Model | PR-AUC | Emerging recall | Continuing recall | FPR (%) |
+|---|---|---|---|---|
+| (a) Training on 2011–2015, test on 2016–2018 (18,851 emerging-family and 104 continuing-family records) |  |  |  |  |
+| LR | 0.015 (0.015–0.016) | 0.009 (0.008–0.011) | 0.019 (0.000–0.052) | 1.58 (1.50–1.63) |
+| DT | 0.023 (0.022–0.024) | 0.018 (0.013–0.023) | 0.022 (0.000–0.051) | 1.24 (1.18–1.34) |
+| RF | 0.025 (0.025–0.026) | 0.020 (0.016–0.024) | 0.058 (0.000–0.099) | 1.17 (1.10–1.25) |
+| XGB | 0.027 (0.026–0.028) | 0.023 (0.020–0.026) | 0.042 (0.000–0.088) | 1.10 (1.02–1.17) |
+| LGBM | 0.026 (0.025–0.027) | 0.023 (0.019–0.026) | 0.048 (0.000–0.083) | 1.05 (0.97–1.13) |
+| (b) Pooled over the six yearly origins, test years 2012–2017 (24,660 emerging-family and 14,139 continuing-family records) |  |  |  |  |
+| LR | – | 0.020 (0.014–0.030) | 0.043 (0.031–0.058) | 1.78 (1.68–1.86) |
+| DT | – | 0.025 (0.021–0.029) | 0.068 (0.062–0.074) | 1.29 (1.25–1.37) |
+| RF | – | 0.038 (0.031–0.044) | 0.100 (0.093–0.108) | 1.75 (1.70–1.82) |
+| XGB | – | 0.044 (0.039–0.050) | 0.091 (0.083–0.099) | 1.57 (1.49–1.64) |
+| LGBM | – | 0.044 (0.038–0.050) | 0.080 (0.075–0.087) | 1.52 (1.50–1.54) |
 
-RE, RC = recall on emerging-family and continuing-family records at the threshold calibrated to 1% FPR on validation data; FPR = realized false-positive rate on the test partition. Columns 2–5: training on 2011–2015 and testing on 2016–2018 (18,851 emerging-family and 104 continuing-family records; positive rate 0.018); mean over three seeds, with the 95% CI of the pooled address-level bootstrap in parentheses (for the FPR the interval is at most ±0.1 percentage points and is omitted). RE^6^, RC^6^ = the same recalls pooled over the six yearly origins 2012–2017, i.e., detected records divided by all records of the group (24,660 emerging-family and 14,139 continuing-family records).
+Emerging recall, continuing recall = recall on emerging-family and continuing-family records (RE and RC of Table X) at the threshold calibrated to 1% FPR on validation data; FPR = realized false-positive rate on the test partition. Values are means over three seeds, with the 95% CI of the address-level bootstrap pooled over the seeds in parentheses. Panel (a): fixed boundary, positive rate 0.018. Panel (b): detected records of the six test years divided by all records of the group, and false alerts divided by all white test records; PR-AUC is not pooled, because the positive rate differs between the years (Table X).
 
 ### Table XII. Combined Protocol by Family: Recall of XGB (95% CI) and Feature Drift Relative to the Training Data
 
@@ -130,11 +139,11 @@ RE, RC = recall on emerging-family and continuing-family records at the threshol
 | 2017 | DMALockerv3 | C | 129 | 0.072 (0.009–0.160) | 0.130 | 0.598 (0.401–0.787) |
 | 2017 | Cerber | C | 3,180 | 0.247 (0.221–0.270) | 0.115 | 0.850 (0.842–0.857) |
 
-Families with at least 100 test records. E = emerging, C = continuing; n = test records with an address unseen in training. Drift is measured between the test records and their reference in the training years (the same family for C, all ransomware for E): KS = Kolmogorov-Smirnov statistic averaged over the six topological features; AUC = ROC-AUC of a classifier two-sample test that separates test from reference records (0.5 = indistinguishable), with three-fold cross-validation in which all records of an address fall into the same fold; the 95% CI is a cluster bootstrap over addresses of the out-of-fold scores.
+Families with at least 100 test records. E = emerging, C = continuing; n = test records with an address unseen in training. Drift is measured between the test records and their reference in the training years (the same family for C, all ransomware for E): KS = Kolmogorov–Smirnov statistic averaged over the six topological features; AUC = ROC-AUC of a classifier two-sample test that separates test from reference records (0.5 = indistinguishable), with three-fold cross-validation in which all records of an address fall into the same fold; the 95% CI is a cluster bootstrap over addresses of the out-of-fold scores.
 
 ### Table XIII. Operational Measures at the Threshold Calibrated to a 1% FPR on Validation Data
 
-| Model | Alerts per 1,000 | False positives per 1,000 | Precision | Recall | False alerts per true alert | Alerts per split (true) |
+| Model | Alerts per 1,000 | False alerts per 1,000 | Precision | Recall | False alerts per true alert | Alerts per split (true alerts) |
 |---|---|---|---|---|---|---|
 | Random split, all features (875,010 test records, 12,424 ransomware) |  |  |  |  |  |  |
 | RF | 16.82 | 9.82 | 0.416 | 0.493 | 1.4 | 14,716 (6,125) |
@@ -149,7 +158,7 @@ Families with at least 100 test records. E = emerging, C = continuing; n = test 
 | XGB | 11.18 | 10.77 | 0.037 | 0.023 | 26.2 | 11,942 (439) |
 | LGBM | 10.77 | 10.36 | 0.038 | 0.023 | 25.5 | 11,504 (434) |
 
-Denominator of the per-1,000 measures = all test records of the protocol (white and ransomware). Alerts = test records scored above the threshold; false positives = white records among them; true alerts = ransomware records among them. Precision = true alerts / alerts; recall = true alerts / ransomware test records; false alerts per true alert = false positives / true alerts. All rates and ratios are computed from the counts summed over three seeds before rounding; the last column gives the mean number of alerts per split, with the true alerts in parentheses.
+Denominator of the per-1,000 measures = all test records of the protocol (white and ransomware). Alerts = test records scored above the threshold; false alerts = white records among them (false positives); true alerts = ransomware records among them. Precision = true alerts / alerts; recall = true alerts / ransomware test records. All rates and ratios are computed from the counts summed over three seeds before rounding; the last column gives the mean number of alerts per split, with the true alerts in parentheses.
 
 ### Table XIV. XGB with Class Weighting
 
@@ -166,18 +175,18 @@ unw. = unweighted model; w. = positive class weighted by the ratio of negative t
 
 ### Table XV. Between-Repetition Variation and Sampling Uncertainty of Key Estimates (Topological Features)
 
-| Estimate | k | Mean (pooled 95% CI) | Range over repetitions | SD between | SE within | Per-repet. 95% CIs |
-|---|---|---|---|---|---|---|
-| Withheld family, known (LGBM) | 5 | 0.196 (0.175–0.230) | 0.186–0.222 | 0.0145 | 0.0074 | 0.169–0.236 |
-| Withheld family, withheld (LGBM) | 5 | 0.021 (0.017–0.026) | 0.019–0.022 | 0.0013 | 0.0021 | 0.016–0.027 |
-| Combined 2016–2018, PR-AUC (XGB) | 3 | 0.027 (0.026–0.028) | 0.027–0.027 | 0.0004 | 0.0004 | 0.026–0.028 |
-| Combined 2016–2018, RE (XGB) | 3 | 0.023 (0.020–0.026) | 0.021–0.025 | 0.0015 | 0.0012 | 0.019–0.027 |
-| Combined 2014, RE (XGB) | 3 | 0.074 (0.061–0.088) | 0.072–0.075 | 0.0014 | 0.0065 | 0.060–0.088 |
-| Combined 2017, RC (XGB) | 3 | 0.241 (0.216–0.263) | 0.226–0.250 | 0.0130 | 0.0075 | 0.212–0.266 |
-| ΔPR-AUC RF − XGB, 2016–2018 | 3 | −0.0015 (−0.0023 to −0.0005) | −0.0021 to −0.0007 | 0.0007 | 0.0002 | −0.0024 to −0.0004 |
-| ΔPR-AUC LGBM − XGB, 2016–2018 | 3 | −0.0007 (−0.0010 to −0.0003) | −0.0009 to −0.0004 | 0.0002 | 0.0001 | −0.0011 to −0.0003 |
+| Estimate | k | Mean (pooled 95% CI) | SD between | SE within | Per-repetition 95% CIs |
+|---|---|---|---|---|---|
+| Withheld family, known (LGBM) | 5 | 0.196 (0.175–0.230) | 0.0145 | 0.0074 | 0.169–0.236 |
+| Withheld family, withheld (LGBM) | 5 | 0.021 (0.017–0.026) | 0.0013 | 0.0021 | 0.016–0.027 |
+| Combined 2016–2018, PR-AUC (XGB) | 3 | 0.027 (0.026–0.028) | 0.0004 | 0.0004 | 0.026–0.028 |
+| Combined 2016–2018, RE (XGB) | 3 | 0.023 (0.020–0.026) | 0.0015 | 0.0012 | 0.019–0.027 |
+| Combined 2014, RE (XGB) | 3 | 0.074 (0.061–0.088) | 0.0014 | 0.0065 | 0.060–0.088 |
+| Combined 2017, RC (XGB) | 3 | 0.241 (0.216–0.263) | 0.0130 | 0.0075 | 0.212–0.266 |
+| ΔPR-AUC × 10^3^, RF − XGB, 2016–2018 | 3 | −1.5 (−2.3 to −0.5) | 0.7 | 0.2 | −2.4 to −0.4 |
+| ΔPR-AUC × 10^3^, LGBM − XGB, 2016–2018 | 3 | −0.7 (−1.0 to −0.3) | 0.2 | 0.1 | −1.1 to −0.3 |
 
-k = number of repetitions (address-disjoint splits for the withheld-family protocol, seeds for the combined protocol). SD between = standard deviation of the point estimates over the repetitions; SE within = mean standard deviation of the address-level bootstrap replicates within one repetition; per-repetition 95% CIs = lowest lower and highest upper limit of the intervals computed separately for each repetition. Δ = paired difference on identical resamples.
+k = number of repetitions (address-disjoint splits for the withheld-family protocol, seeds for the combined protocol). SD between = standard deviation of the point estimates over the repetitions; SE within = mean standard deviation of the address-level bootstrap replicates within one repetition; per-repetition 95% CIs = lowest lower and highest upper limit of the intervals computed separately for each repetition. Δ = paired difference on identical resamples, given in units of 0.001.
 
 ### Statistics quoted in the text
 

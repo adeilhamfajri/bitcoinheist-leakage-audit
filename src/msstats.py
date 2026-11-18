@@ -112,6 +112,28 @@ def cpooled(model, fs, group, tags):
     g = CB[(CB.model == model) & (CB.fs == fs) & CB.test.isin(tags)]; ncol = 'n_' + group; rcol = 'recall_' + group
     g = g[g[ncol] > 0]; ps = g.groupby('seed').apply(lambda d: (d[rcol] * d[ncol]).sum() / d[ncol].sum())
     return float(ps.mean()), float(g.groupby('test')[ncol].mean().sum())
+def cpooled_ci(model, fs, group, tags):
+    """95% CI of the recall pooled over several test periods. The test partitions of different years share no address, so their
+    bootstrap replicates are independent; replicate b of the pooled recall is the average of the yearly replicates b weighted by
+    the (fixed) number of records of the group, and the replicates of the seeds are pooled."""
+    ncol = 'n_' + group; rcol = 'recall_' + group; reps = []
+    for s_ in CSEEDS:
+        num = 0.0; den = 0.0
+        for t_ in tags:
+            r_ = CB[(CB.test == t_) & (CB.model == model) & (CB.fs == fs) & (CB.seed == s_)].iloc[0]
+            if r_[ncol] <= 0: continue
+            num = num + r_[ncol] * np.nan_to_num(CBB[f'{t_}|{s_}|{model}|{fs}|{rcol}'], nan=r_[rcol]); den += r_[ncol]
+        reps.append(num / den)
+    return pci(np.concatenate(reps))
+def cpooled_fpr(model, fs, tags):
+    """Realized FPR pooled over several test periods (false alerts divided by white test records, summed over periods and seeds) and its 95% CI."""
+    g = CB[(CB.model == model) & (CB.fs == fs) & CB.test.isin(tags)]; reps = []
+    for s_ in CSEEDS:
+        num = 0.0; den = 0.0
+        for t_ in tags:
+            r_ = g[(g.test == t_) & (g.seed == s_)].iloc[0]; num = num + r_.n_white_test * CBB[f'{t_}|{s_}|{model}|{fs}|fpr']; den += r_.n_white_test
+        reps.append(num / den)
+    return float(g.fp.sum() / g.n_white_test.sum()), pci(np.concatenate(reps))
 def opr(model, fs, col): return OPR[(OPR.model == model) & (OPR.fs == fs)][col].mean()
 def opst(src, model, fs, tag=None):
     """Operational measures from counts pooled over the repetitions (ratios of sums, so that every rate and ratio uses the same
