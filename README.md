@@ -120,7 +120,7 @@ cores, `pip install -r requirements.txt`; the resulting environment is listed in
 
 The check can be repeated with `scripts/cleanroom_check.sh <path-to-BitcoinHeistData.csv> <empty-work-directory>`
 (add `quick` to regenerate only the tables and figures from the committed result files). The table check was
-repeated on 18 November 2026 after the tables were reformatted.
+repeated on 18 and 23 November 2026 after the tables were reformatted.
 
 The remaining experiment scripts use the same seeds and library versions; together they take about 6.5 hours on
 the hardware above.

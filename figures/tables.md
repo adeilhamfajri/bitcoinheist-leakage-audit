@@ -61,16 +61,16 @@ Acc. = accuracy; Prec. = precision; Rec. = recall. Precision, recall, F1, and MC
 
 ### Table VIII. Paired Tests of the Effect of Address Overlap on PR-AUC (XGB, Ten Splits)
 
-| Features | With overlap | Without overlap | Difference (95% CI) | p |
+| Feature set | With overlap | Without overlap | Difference (95% CI) | p |
 |---|---|---|---|---|
 | Leak injection: same-address records added to the training partition of an address-disjoint split |  |  |  |  |
-| All | 0.510 | 0.511 | −0.001 (−0.004 to +0.003) | 0.65 |
-| Topological | 0.138 | 0.143 | −0.005 (−0.006 to −0.003) | < 0.001 |
+| All features | 0.510 | 0.511 | −0.001 (−0.004 to +0.003) | 0.65 |
+| Topological features | 0.138 | 0.143 | −0.005 (−0.006 to −0.003) | < 0.001 |
 | Address purge: same-address records deleted from the training partition of a random split |  |  |  |  |
-| All | 0.495 | 0.413 | +0.082 (+0.079 to +0.085) | < 0.001 |
-| Topological | 0.143 | 0.117 | +0.026 (+0.025 to +0.027) | < 0.001 |
+| All features | 0.495 | 0.413 | +0.082 (+0.079 to +0.085) | < 0.001 |
+| Topological features | 0.143 | 0.117 | +0.026 (+0.025 to +0.027) | < 0.001 |
 
-Both models of a pair are scored on identical test records. Leak injection changes only the overlap: the address-disjoint training records are kept and the same-address records are added, so the difference measures the effect of overlap (five splits for the topological features). Address purge changes the overlap and the training population at the same time, because the deletion removes most repeated-address ransomware records from training; its difference is therefore not a measure of leakage. Difference = with overlap minus without, averaged over the splits; the 95% CI is the t-interval of the mean paired difference, so it describes the variation between splits; paired t-test.
+Both models of a pair are scored on identical test records. Leak injection changes only the overlap: the address-disjoint training records are kept and the same-address records are added, so the difference measures the effect of overlap (five splits for the topological features). Address purge changes the overlap and the training population at the same time, because the deletion removes most repeated-address ransomware records from training; its difference is therefore not a measure of leakage. Difference = with overlap minus without, averaged over the splits; a negative value means that the model trained with overlap scores lower. The 95% CI is the t-interval of the mean paired difference and p is from a paired t-test; both describe the observed splits of one dataset and are read as descriptive.
 
 ### Table IX. Withheld-Family Protocol: Records per Family and Recall (95% CI) at a Validation-Calibrated 1% FPR
 
@@ -103,28 +103,33 @@ Total = ransomware records of the family in the complete dataset; Train, Test = 
 
 Training on all years before the test period; test records restricted to addresses unseen in training. nE, nC = ransomware test records of emerging and continuing families; π = positive rate of the test partition. FPR, RE, and RC = realized false-positive rate and recall on emerging and continuing families for the topological model at the threshold calibrated to 1% FPR on validation data. Means over three seeds; confidence intervals are given in Table XII and Fig. 5.
 
-### Table XI. Combined Protocol for All Classifiers (Topological Features)
+### Table XI(a). Combined Protocol for All Classifiers at the Fixed Boundary: Training on 2011–2015, Test on 2016–2018 (Topological Features)
 
 | Model | PR-AUC | Emerging recall | Continuing recall | FPR (%) |
 |---|---|---|---|---|
-| (a) Training on 2011–2015, test on 2016–2018 (18,851 emerging-family and 104 continuing-family records) |  |  |  |  |
 | LR | 0.015 (0.015–0.016) | 0.009 (0.008–0.011) | 0.019 (0.000–0.052) | 1.58 (1.50–1.63) |
 | DT | 0.023 (0.022–0.024) | 0.018 (0.013–0.023) | 0.022 (0.000–0.051) | 1.24 (1.18–1.34) |
 | RF | 0.025 (0.025–0.026) | 0.020 (0.016–0.024) | 0.058 (0.000–0.099) | 1.17 (1.10–1.25) |
 | XGB | 0.027 (0.026–0.028) | 0.023 (0.020–0.026) | 0.042 (0.000–0.088) | 1.10 (1.02–1.17) |
 | LGBM | 0.026 (0.025–0.027) | 0.023 (0.019–0.026) | 0.048 (0.000–0.083) | 1.05 (0.97–1.13) |
-| (b) Pooled over the six yearly origins, test years 2012–2017 (24,660 emerging-family and 14,139 continuing-family records) |  |  |  |  |
-| LR | – | 0.020 (0.014–0.030) | 0.043 (0.031–0.058) | 1.78 (1.68–1.86) |
-| DT | – | 0.025 (0.021–0.029) | 0.068 (0.062–0.074) | 1.29 (1.25–1.37) |
-| RF | – | 0.038 (0.031–0.044) | 0.100 (0.093–0.108) | 1.75 (1.70–1.82) |
-| XGB | – | 0.044 (0.039–0.050) | 0.091 (0.083–0.099) | 1.57 (1.49–1.64) |
-| LGBM | – | 0.044 (0.038–0.050) | 0.080 (0.075–0.087) | 1.52 (1.50–1.54) |
 
-Emerging recall, continuing recall = recall on emerging-family and continuing-family records (RE and RC of Table X) at the threshold calibrated to 1% FPR on validation data; FPR = realized false-positive rate on the test partition. Values are means over three seeds, with the 95% CI of the address-level bootstrap pooled over the seeds in parentheses. Panel (a): fixed boundary, positive rate 0.018. Panel (b): detected records of the six test years divided by all records of the group, and false alerts divided by all white test records; PR-AUC is not pooled, because the positive rate differs between the years (Table X).
+18,851 emerging-family and 104 continuing-family test records; positive rate 0.018. Emerging recall, continuing recall = recall on emerging-family and continuing-family records (RE and RC of Table X) at the threshold calibrated to 1% FPR on validation data; FPR = realized false-positive rate on the test partition. Values are means over three seeds, with the 95% CI of the address-level bootstrap pooled over the seeds in parentheses.
 
-### Table XII. Combined Protocol by Family: Recall of XGB (95% CI) and Feature Drift Relative to the Training Data
+### Table XI(b). Combined Protocol for All Classifiers Pooled over the Six Yearly Origins: Test Years 2012–2017 (Topological Features)
 
-| Test | Family | Type | n | Recall (95% CI) | KS | AUC (95% CI) |
+| Model | Emerging recall | Continuing recall | FPR (%) |
+|---|---|---|---|
+| LR | 0.020 (0.014–0.030) | 0.043 (0.031–0.058) | 1.78 (1.68–1.86) |
+| DT | 0.025 (0.021–0.029) | 0.068 (0.062–0.074) | 1.29 (1.25–1.37) |
+| RF | 0.038 (0.031–0.044) | 0.100 (0.093–0.108) | 1.75 (1.70–1.82) |
+| XGB | 0.044 (0.039–0.050) | 0.091 (0.083–0.099) | 1.57 (1.49–1.64) |
+| LGBM | 0.044 (0.038–0.050) | 0.080 (0.075–0.087) | 1.52 (1.50–1.54) |
+
+24,660 emerging-family and 14,139 continuing-family test records. Columns and intervals as in Table XI(a). Recall = detected records of the six test years divided by all records of the group; FPR = false alerts divided by all white test records. PR-AUC is not reported, because it is not pooled across years with different positive rates (Table X).
+
+### Table XII. Combined Protocol by Family (E = Emerging, C = Continuing): Recall of XGB and Feature Drift Relative to the Training Data
+
+| Test | Family | Type | n | Recall (95% CI) | Drift KS | Drift AUC (95% CI) |
 |---|---|---|---|---|---|---|
 | 2012 | CryptoLocker | C | 429 | 0.045 (0.011–0.130) | 0.196 | 0.580 (0.392–0.713) |
 | 2013 | CryptoLocker | C | 6,691 | 0.057 (0.045–0.070) | 0.154 | 0.693 (0.656–0.724) |
@@ -139,7 +144,7 @@ Emerging recall, continuing recall = recall on emerging-family and continuing-fa
 | 2017 | DMALockerv3 | C | 129 | 0.072 (0.009–0.160) | 0.130 | 0.598 (0.401–0.787) |
 | 2017 | Cerber | C | 3,180 | 0.247 (0.221–0.270) | 0.115 | 0.850 (0.842–0.857) |
 
-Families with at least 100 test records. E = emerging, C = continuing; n = test records with an address unseen in training. Drift is measured between the test records and their reference in the training years (the same family for C, all ransomware for E): KS = Kolmogorov–Smirnov statistic averaged over the six topological features; AUC = ROC-AUC of a classifier two-sample test that separates test from reference records (0.5 = indistinguishable), with three-fold cross-validation in which all records of an address fall into the same fold; the 95% CI is a cluster bootstrap over addresses of the out-of-fold scores.
+Families with at least 100 test records. Type: E = emerging family, C = continuing family; n = test records with an address unseen in training. Recall = detection recall at the calibrated threshold. Drift is measured between the test records and their reference in the training years (the same family for C, all ransomware for E). Drift KS = Kolmogorov–Smirnov statistic averaged over the six topological features. Drift AUC = ROC-AUC of a classifier two-sample test that separates test from reference records (0.5 = indistinguishable), with three-fold cross-validation in which all records of an address fall into the same fold; the 95% CI is a cluster bootstrap over addresses of the out-of-fold scores. The drift AUC quantifies how distinguishable the two feature distributions are; it is not a measure of ransomware detection performance.
 
 ### Table XIII. Operational Measures at the Threshold Calibrated to a 1% FPR on Validation Data
 
@@ -171,7 +176,7 @@ Denominator of the per-1,000 measures = all test records of the protocol (white 
 | Topo. / Address | 0.140 | 0.131 | 0.049 | 0.687 |
 | Topo. / Temporal | 0.027 | 0.028 | 0.028 | 0.584 |
 
-unw. = unweighted model; w. = positive class weighted by the ratio of negative to positive training records. Both columns are means over the same three seeds; Tables VI and VII report ten splits for the random and address-disjoint protocols.
+unw. = without class weighting; w. = with class weighting (positive class weighted by the ratio of negative to positive training records). Both columns are means over the same three seeds; Tables VI and VII report ten splits for the random and address-disjoint protocols.
 
 ### Table XV. Between-Repetition Variation and Sampling Uncertainty of Key Estimates (Topological Features)
 
